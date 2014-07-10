@@ -182,6 +182,14 @@
         [containerView insertSubview:sourceBottomShadow aboveSubview:sourceBottomView];
         [containerView insertSubview:destinationUpperShadow belowSubview:sourceUpperView];
         [containerView insertSubview:destinationBottomShadow aboveSubview:destinationBottomView];
+
+        // Perspective
+        CATransform3D rotationAndPerspectiveTransform = CATransform3DIdentity;
+        rotationAndPerspectiveTransform.m34 = 1.0 / -500;
+        sourceUpperView.layer.transform = rotationAndPerspectiveTransform;
+        
+        sourceUpperView.layer.anchorPoint = CGPointMake(0.5, 1.0);
+        sourceUpperView.frame = CGRectMake(0, 0, sourceUpperView.frame.size.width, sourceUpperView.frame.size.height);
         
         //切れ目がないアニメーション
         [UIView animateKeyframesWithDuration:[self transitionDuration:transitionContext]
@@ -193,7 +201,8 @@
                                                               relativeDuration:0.5
                                                                     animations:
                                        ^{
-                                           sourceUpperView.frame = CGRectMake(0, h, w, 0);
+                                           sourceUpperView.layer.transform = CATransform3DMakeRotation(M_PI, 1, 0, 0);
+//                                           sourceUpperView.frame = CGRectMake(0, h, w, 0);
                                            sourceUpperShadow.frame = sourceUpperView.frame;
                                            sourceUpperShadow.alpha = maxShadow * 0.5f;
                                            destinationBottomShadow.alpha = maxShadow * 0.5f;
@@ -205,7 +214,7 @@
                                                               relativeDuration:0.5
                                                                     animations:
                                        ^{
-                                           destinationBottomView.frame = CGRectMake(0, h, w, h);
+//                                           destinationBottomView.frame = CGRectMake(0, h, w, h);
                                            destinationBottomShadow.frame = destinationBottomView.frame;
                                            destinationBottomShadow.alpha = minShadow;
                                            sourceUpperShadow.alpha = maxShadow;
