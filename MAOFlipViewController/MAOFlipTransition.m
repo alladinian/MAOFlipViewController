@@ -6,16 +6,20 @@
 //  Copyright (c) 2014年 Mao Nishi. All rights reserved.
 //
 
-const CGFloat perspectiveDepth = (1.0f / -500.0f);
+const CGFloat perspectiveDepth = (1.0f / -400.0f);
 
 #import "MAOFlipTransition.h"
 
 @implementation MAOFlipTransition
 
-- (CATransform3D) makeRotationAndPerspectiveTransform:(CGFloat) angle {
-    CATransform3D transform = CATransform3DMakeRotation(angle, 1.0f, 0.0f, 0.0f);
-    transform.m34 = perspectiveDepth;
-    return transform;
+- (CATransform3D)makeRotationAndPerspectiveTransform:(CGFloat)angle
+{
+    //Apply transformation to the PLANE
+    CATransform3D t = CATransform3DIdentity;
+    //Add the perspective!!!
+    t.m34 = perspectiveDepth;
+    t = CATransform3DRotate(t, angle, 1, 0, 0);
+    return t;
 }
 
 
@@ -98,15 +102,15 @@ CGFloat RadiansToDegrees(CGFloat radians)
     
     
     //上下のスナップショットをコンテナに配置
-
+    [containerView addSubview:sourceUpperView];
+    [containerView addSubview:sourceBottomView];
     
     
     
     if (self.presenting) {
         //Pushの動作。上にめくる
 
-        [containerView addSubview:sourceUpperView];
-        [containerView addSubview:sourceBottomView];
+
         
         //遷移先のビューをスナップショットの下に挿入
         [containerView insertSubview:destinationVC.view belowSubview:sourceUpperView];
@@ -195,9 +199,6 @@ CGFloat RadiansToDegrees(CGFloat radians)
         
     }else{
         //POPの動作。下にめくる。
-        
-        [containerView addSubview:sourceUpperView];
-        [containerView addSubview:sourceBottomView];
         
         //高さ設定しておく
         //高さ0にしておく
