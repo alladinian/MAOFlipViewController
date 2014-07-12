@@ -22,7 +22,6 @@ const CGFloat perspectiveDepth = (1.0f / -400.0f);
     return t;
 }
 
-
 CGFloat DegreesToRadians(CGFloat degrees)
 {
     return degrees * M_PI / 180;
@@ -38,10 +37,22 @@ CGFloat RadiansToDegrees(CGFloat radians)
     return 0.35f;
 }
 
+- (UIView *)shadowViewForView:(UIView *)view
+{
+    return [view viewWithTag:999];
+}
+
 - (UIView *)createUpperHalf:(UIView *)view
 {
     CGRect snapRect = CGRectMake(0, 0, view.frame.size.width, view.frame.size.height / 2);
     UIView *topHalf = [view resizableSnapshotViewFromRect:snapRect afterScreenUpdates:NO withCapInsets:UIEdgeInsetsZero];
+    
+    UIView *shadowView = [[UIView alloc] initWithFrame:topHalf.bounds];
+    shadowView.backgroundColor = [UIColor blackColor];
+    shadowView.alpha = 0.0f;
+    shadowView.tag = 999;
+    [topHalf addSubview:shadowView];
+    
     topHalf.userInteractionEnabled = NO;
     return topHalf;
 }
@@ -50,8 +61,16 @@ CGFloat RadiansToDegrees(CGFloat radians)
 {
     CGRect snapRect = CGRectMake(0, CGRectGetMidY(view.frame), view.frame.size.width, view.frame.size.height / 2);
     UIView *bottomHalf = [view resizableSnapshotViewFromRect:snapRect afterScreenUpdates:NO withCapInsets:UIEdgeInsetsZero];
+    
+    UIView *shadowView = [[UIView alloc] initWithFrame:bottomHalf.bounds];
+    shadowView.backgroundColor = [UIColor blackColor];
+    shadowView.alpha = 0.0f;
+    shadowView.tag = 999;
+    [bottomHalf addSubview:shadowView];
+    
     CGRect newFrame = CGRectOffset(bottomHalf.frame, 0, bottomHalf.bounds.size.height);
     bottomHalf.frame = newFrame;
+    
     bottomHalf.userInteractionEnabled = NO;
     return bottomHalf;
 }
@@ -84,20 +103,9 @@ CGFloat RadiansToDegrees(CGFloat radians)
     UIView *destinationUpperView = [self createUpperHalf:destinationSnapshot];
     UIView *destinationBottomView = [self createBottomHalf:destinationSnapshot];
     
-    CGFloat minShadow = 0.0f;
+    CGFloat midShadow = 0.2f;
     CGFloat maxShadow = 0.7f;
-    
-    UIView *sourceUpperShadow = [[UIView alloc] initWithFrame:sourceUpperView.frame];
-    sourceUpperShadow.backgroundColor = [UIColor blackColor];
-    
-    UIView *sourceBottomShadow = [[UIView alloc] initWithFrame:sourceBottomView.frame];
-    sourceBottomShadow.backgroundColor = [UIColor blackColor];
-    
-    UIView *destinationUpperShadow = [[UIView alloc] initWithFrame:destinationUpperView.frame];
-    destinationUpperShadow.backgroundColor = [UIColor blackColor];
-    
-    UIView *destinationBottomShadow = [[UIView alloc] initWithFrame:destinationBottomView.frame];
-    destinationBottomShadow.backgroundColor = [UIColor blackColor];
+
     
     
     
@@ -117,20 +125,6 @@ CGFloat RadiansToDegrees(CGFloat radians)
         
         //めくり先の上のビュー
         [containerView addSubview:destinationUpperView];
-        
-        
-        // Add shadows
-        destinationUpperShadow.frame = destinationUpperView.frame;
-        
-        sourceUpperShadow.alpha = minShadow;
-        sourceBottomShadow.alpha = minShadow;
-        destinationUpperShadow.alpha = minShadow;
-        destinationBottomShadow.alpha = maxShadow;
-        
-//        [containerView insertSubview:sourceUpperShadow aboveSubview:sourceUpperView];
-//        [containerView insertSubview:sourceBottomShadow aboveSubview:sourceBottomView];
-//        [containerView insertSubview:destinationUpperShadow aboveSubview:destinationUpperView];
-//        [containerView insertSubview:destinationBottomShadow belowSubview:sourceBottomView];
 
         
         
@@ -158,12 +152,7 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                        ^{
                                            CGFloat angle = DegreesToRadians(90);
                                            sourceBottomView.layer.transform = [self makeRotationAndPerspectiveTransform:angle];
-                                           
-                                           
-                                           sourceBottomShadow.frame = sourceBottomView.frame;
-                                           sourceBottomShadow.alpha = maxShadow * 0.5;
-                                           destinationUpperShadow.alpha = maxShadow * 0.5;
-                                           destinationBottomShadow.alpha = minShadow;
+                                           [self shadowViewForView:sourceBottomView].alpha = midShadow;
                                        }];
                                       
                                       // 2つ目のKey-frame: 回転アニメーション
@@ -173,10 +162,8 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                        ^{
                                            CGFloat angle = DegreesToRadians(90);
                                            destinationUpperView.layer.transform = [self makeRotationAndPerspectiveTransform:angle];
-                                           
-                                           destinationUpperShadow.frame = destinationUpperView.frame;
-                                           destinationUpperShadow.alpha = minShadow;
-                                           sourceUpperShadow.alpha = maxShadow;
+                                           [self shadowViewForView:sourceUpperView].alpha = maxShadow;
+                                           [self shadowViewForView:destinationUpperView].alpha = midShadow;
                                        }];
                                   }
                                   completion:^(BOOL finished){
@@ -184,12 +171,6 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                       [sourceUpperView removeFromSuperview];//遷移元の上半分は不要になるため削除する
                                       [destinationUpperView removeFromSuperview];
                                       [destinationBottomView removeFromSuperview];
-                                      
-                                      // Remove shadows
-                                      [sourceUpperShadow removeFromSuperview];
-                                      [sourceBottomShadow removeFromSuperview];
-                                      [destinationUpperShadow removeFromSuperview];
-                                      [destinationBottomShadow removeFromSuperview];
                                       
                                       // 画面遷移終了を通知
                                       BOOL completed = ![transitionContext transitionWasCancelled];
@@ -208,19 +189,6 @@ CGFloat RadiansToDegrees(CGFloat radians)
         
         //遷移先のビューをスナップショットの下に挿入
         [containerView insertSubview:destinationVC.view belowSubview:sourceUpperView];
-        
-        // Add shadows
-        destinationBottomShadow.frame = destinationBottomView.frame;
-        
-        sourceUpperShadow.alpha = minShadow;
-        sourceBottomShadow.alpha = minShadow;
-        destinationUpperShadow.alpha = maxShadow;
-        destinationBottomShadow.alpha = minShadow;
-        
-//        [containerView insertSubview:sourceUpperShadow aboveSubview:sourceUpperView];
-//        [containerView insertSubview:sourceBottomShadow aboveSubview:sourceBottomView];
-//        [containerView insertSubview:destinationUpperShadow belowSubview:sourceUpperView];
-//        [containerView insertSubview:destinationBottomShadow aboveSubview:destinationBottomView];
 
         
         sourceUpperView.layer.anchorPoint = CGPointMake(0.5, 1.0);
@@ -244,11 +212,7 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                        ^{
                                            CGFloat angle = DegreesToRadians(-90);
                                            sourceUpperView.layer.transform = [self makeRotationAndPerspectiveTransform:angle];
-
-                                           sourceUpperShadow.frame = sourceUpperView.frame;
-                                           sourceUpperShadow.alpha = maxShadow * 0.5f;
-                                           destinationBottomShadow.alpha = maxShadow * 0.5f;
-                                           destinationUpperShadow.alpha = minShadow;
+                                           [self shadowViewForView:sourceUpperView].alpha = midShadow;
                                        }];
                                       
                                       // 2つ目のKey-frame: 回転アニメーション
@@ -258,11 +222,8 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                        ^{
                                            CGFloat angle = DegreesToRadians(-90);
                                            destinationBottomView.layer.transform = [self makeRotationAndPerspectiveTransform:angle];
-                                           
-                                           destinationBottomShadow.frame = destinationBottomView.frame;
-                                           destinationBottomShadow.alpha = minShadow;
-                                           sourceUpperShadow.alpha = maxShadow;
-                                           sourceBottomShadow.alpha = maxShadow;
+                                           [self shadowViewForView:sourceBottomView].alpha = maxShadow;
+                                           [self shadowViewForView:destinationBottomView].alpha = midShadow;
                                        }];
                                   }
                                   completion:^(BOOL finished){
@@ -270,13 +231,6 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                       [sourceUpperView removeFromSuperview];//不要になるため削除する
                                       [destinationUpperView removeFromSuperview];
                                       [destinationBottomView removeFromSuperview];
-                                      
-                                      
-                                      // Remove shadows
-                                      [sourceUpperShadow removeFromSuperview];
-                                      [sourceBottomShadow removeFromSuperview];
-                                      [destinationUpperShadow removeFromSuperview];
-                                      [destinationBottomShadow removeFromSuperview];
                                       
                                       // 画面遷移終了を通知
                                       BOOL completed = ![transitionContext transitionWasCancelled];
