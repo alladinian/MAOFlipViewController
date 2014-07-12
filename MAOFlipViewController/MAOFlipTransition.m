@@ -6,7 +6,7 @@
 //  Copyright (c) 2014年 Mao Nishi. All rights reserved.
 //
 
-const CGFloat perspectiveDepth = (1.0f / -400.0f);
+const CGFloat perspectiveDepth = (1.0f / -2000.0f);
 
 #import "MAOFlipTransition.h"
 
@@ -105,7 +105,7 @@ CGFloat RadiansToDegrees(CGFloat radians)
     
     CGFloat midShadow = 0.2f;
     CGFloat maxShadow = 0.7f;
-
+    
     
     
     
@@ -117,15 +117,16 @@ CGFloat RadiansToDegrees(CGFloat radians)
     
     if (self.presenting) {
         //Pushの動作。上にめくる
-
-
+        
+        
         
         //遷移先のビューをスナップショットの下に挿入
         [containerView insertSubview:destinationVC.view belowSubview:sourceUpperView];
         
         //めくり先の上のビュー
         [containerView addSubview:destinationUpperView];
-
+        [containerView insertSubview:destinationBottomView aboveSubview:destinationVC.view];
+        
         
         
         sourceBottomView.layer.anchorPoint = CGPointMake(0.5, 0.0);
@@ -137,7 +138,11 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                             sourceBottomView.frame.size.width,
                                             sourceBottomView.frame.size.height);
         destinationUpperView.frame = sourceUpperView.frame;
-
+        
+        
+        [self shadowViewForView:destinationUpperView].alpha = midShadow;
+        [self shadowViewForView:destinationBottomView].alpha = maxShadow;
+        
         
         //切れ目がないアニメーション
         [UIView animateKeyframesWithDuration:[self transitionDuration:transitionContext]
@@ -153,6 +158,7 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                            CGFloat angle = DegreesToRadians(90);
                                            sourceBottomView.layer.transform = [self makeRotationAndPerspectiveTransform:angle];
                                            [self shadowViewForView:sourceBottomView].alpha = midShadow;
+                                           [self shadowViewForView:destinationBottomView].alpha = 0;
                                        }];
                                       
                                       // 2つ目のKey-frame: 回転アニメーション
@@ -160,10 +166,10 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                                               relativeDuration:0.5
                                                                     animations:
                                        ^{
-                                           CGFloat angle = DegreesToRadians(90);
+                                           CGFloat angle = DegreesToRadians(0);
                                            destinationUpperView.layer.transform = [self makeRotationAndPerspectiveTransform:angle];
                                            [self shadowViewForView:sourceUpperView].alpha = maxShadow;
-                                           [self shadowViewForView:destinationUpperView].alpha = midShadow;
+                                           [self shadowViewForView:destinationUpperView].alpha = 0;
                                        }];
                                   }
                                   completion:^(BOOL finished){
@@ -189,7 +195,8 @@ CGFloat RadiansToDegrees(CGFloat radians)
         
         //遷移先のビューをスナップショットの下に挿入
         [containerView insertSubview:destinationVC.view belowSubview:sourceUpperView];
-
+        [containerView insertSubview:destinationUpperView aboveSubview:destinationVC.view];
+        
         
         sourceUpperView.layer.anchorPoint = CGPointMake(0.5, 1.0);
         destinationBottomView.layer.anchorPoint = CGPointMake(0.5, 0.0);
@@ -199,6 +206,9 @@ CGFloat RadiansToDegrees(CGFloat radians)
         
         sourceUpperView.frame = CGRectMake(0, 0, sourceUpperView.frame.size.width, sourceUpperView.frame.size.height);
         destinationBottomView.frame = sourceBottomView.frame;
+        
+        [self shadowViewForView:destinationUpperView].alpha = maxShadow;
+        [self shadowViewForView:destinationBottomView].alpha = midShadow;
         
         //切れ目がないアニメーション
         [UIView animateKeyframesWithDuration:[self transitionDuration:transitionContext]
@@ -212,6 +222,7 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                        ^{
                                            CGFloat angle = DegreesToRadians(-90);
                                            sourceUpperView.layer.transform = [self makeRotationAndPerspectiveTransform:angle];
+                                           [self shadowViewForView:destinationUpperView].alpha = 0;
                                            [self shadowViewForView:sourceUpperView].alpha = midShadow;
                                        }];
                                       
@@ -220,10 +231,10 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                                               relativeDuration:0.5
                                                                     animations:
                                        ^{
-                                           CGFloat angle = DegreesToRadians(-90);
+                                           CGFloat angle = DegreesToRadians(0);
                                            destinationBottomView.layer.transform = [self makeRotationAndPerspectiveTransform:angle];
                                            [self shadowViewForView:sourceBottomView].alpha = maxShadow;
-                                           [self shadowViewForView:destinationBottomView].alpha = midShadow;
+                                           [self shadowViewForView:destinationBottomView].alpha = 0;
                                        }];
                                   }
                                   completion:^(BOOL finished){
