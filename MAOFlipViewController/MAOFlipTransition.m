@@ -12,6 +12,13 @@ const CGFloat perspectiveDepth = (1.0f / -500.0f);
 
 @implementation MAOFlipTransition
 
+- (CATransform3D) makeRotationAndPerspectiveTransform:(CGFloat) angle {
+    CATransform3D transform = CATransform3DMakeRotation(angle, 1.0f, 0.0f, 0.0f);
+    transform.m34 = perspectiveDepth;
+    return transform;
+}
+
+
 CGFloat DegreesToRadians(CGFloat degrees)
 {
     return degrees * M_PI / 180;
@@ -91,17 +98,15 @@ CGFloat RadiansToDegrees(CGFloat radians)
     
     
     //上下のスナップショットをコンテナに配置
-    [containerView addSubview:sourceUpperView];
-    [containerView addSubview:sourceBottomView];
+
     
     
     
     if (self.presenting) {
         //Pushの動作。上にめくる
-        
-        //高さ0にしておく
-//        [destinationUpperView setFrame:CGRectMake(0, destinationUpperView.frame.size.height,
-//                                                  destinationUpperView.frame.size.width, 0)];
+
+        [containerView addSubview:sourceUpperView];
+        [containerView addSubview:sourceBottomView];
         
         //遷移先のビューをスナップショットの下に挿入
         [containerView insertSubview:destinationVC.view belowSubview:sourceUpperView];
@@ -122,19 +127,19 @@ CGFloat RadiansToDegrees(CGFloat radians)
 //        [containerView insertSubview:sourceBottomShadow aboveSubview:sourceBottomView];
 //        [containerView insertSubview:destinationUpperShadow aboveSubview:destinationUpperView];
 //        [containerView insertSubview:destinationBottomShadow belowSubview:sourceBottomView];
-        
-        // Perspective
-        CATransform3D perspectiveTransform = CATransform3DIdentity;
-        perspectiveTransform.m34 = perspectiveDepth;
-        sourceBottomView.layer.transform = perspectiveTransform;
 
         
+        
         sourceBottomView.layer.anchorPoint = CGPointMake(0.5, 0.0);
-        destinationUpperView.layer.anchorPoint = sourceBottomView.layer.anchorPoint;
+        destinationUpperView.layer.anchorPoint = CGPointMake(0.5, 1.0);
+        
+        destinationUpperView.layer.transform = CATransform3DMakeRotation(-M_PI/2.0f, 1, 0, 0); // Make it already halfway rotated
+        
         sourceBottomView.frame = CGRectMake(0, sourceUpperView.frame.size.height,
                                             sourceBottomView.frame.size.width,
                                             sourceBottomView.frame.size.height);
-        destinationUpperView.frame = sourceBottomView.frame;
+        destinationUpperView.frame = sourceUpperView.frame;
+
         
         //切れ目がないアニメーション
         [UIView animateKeyframesWithDuration:[self transitionDuration:transitionContext]
@@ -147,9 +152,9 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                                               relativeDuration:0.5
                                                                     animations:
                                        ^{
-                                           CGFloat angle = DegreesToRadians(179);
-                                           sourceBottomView.layer.transform = CATransform3DMakeRotation(angle, 1, 0, 0);
-                                           destinationUpperView.layer.transform = CATransform3DMakeRotation(-angle, 1, 0, 0);
+                                           CGFloat angle = DegreesToRadians(90);
+                                           sourceBottomView.layer.transform = [self makeRotationAndPerspectiveTransform:angle];
+                                           
                                            
                                            sourceBottomShadow.frame = sourceBottomView.frame;
                                            sourceBottomShadow.alpha = maxShadow * 0.5;
@@ -162,7 +167,9 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                                               relativeDuration:0.5
                                                                     animations:
                                        ^{
-                                           //destinationUpperView.frame = CGRectMake(0, 0, w, h);
+                                           CGFloat angle = DegreesToRadians(90);
+                                           destinationUpperView.layer.transform = [self makeRotationAndPerspectiveTransform:angle];
+                                           
                                            destinationUpperShadow.frame = destinationUpperView.frame;
                                            destinationUpperShadow.alpha = minShadow;
                                            sourceUpperShadow.alpha = maxShadow;
@@ -189,6 +196,9 @@ CGFloat RadiansToDegrees(CGFloat radians)
     }else{
         //POPの動作。下にめくる。
         
+        [containerView addSubview:sourceUpperView];
+        [containerView addSubview:sourceBottomView];
+        
         //高さ設定しておく
         //高さ0にしておく
         [containerView addSubview:destinationBottomView];
@@ -211,14 +221,15 @@ CGFloat RadiansToDegrees(CGFloat radians)
 //        [containerView insertSubview:destinationUpperShadow belowSubview:sourceUpperView];
 //        [containerView insertSubview:destinationBottomShadow aboveSubview:destinationBottomView];
 
-        // Perspective
-        CATransform3D rotationAndPerspectiveTransform = CATransform3DIdentity;
-        rotationAndPerspectiveTransform.m34 = perspectiveDepth;
-        sourceUpperView.layer.transform = rotationAndPerspectiveTransform;
-        //sourceUpperView.layer.doubleSided = NO;
         
         sourceUpperView.layer.anchorPoint = CGPointMake(0.5, 1.0);
+        destinationBottomView.layer.anchorPoint = CGPointMake(0.5, 0.0);
+        
+        destinationBottomView.layer.transform = CATransform3DMakeRotation(M_PI/2.0f, 1, 0, 0); // Make it already halfway rotated
+        
+        
         sourceUpperView.frame = CGRectMake(0, 0, sourceUpperView.frame.size.width, sourceUpperView.frame.size.height);
+        destinationBottomView.frame = sourceBottomView.frame;
         
         //切れ目がないアニメーション
         [UIView animateKeyframesWithDuration:[self transitionDuration:transitionContext]
@@ -230,8 +241,8 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                                               relativeDuration:0.5
                                                                     animations:
                                        ^{
-                                           CGFloat angle = DegreesToRadians(-179);
-                                           sourceUpperView.layer.transform = CATransform3DMakeRotation(angle, 1, 0, 0);
+                                           CGFloat angle = DegreesToRadians(-90);
+                                           sourceUpperView.layer.transform = [self makeRotationAndPerspectiveTransform:angle];
 
                                            sourceUpperShadow.frame = sourceUpperView.frame;
                                            sourceUpperShadow.alpha = maxShadow * 0.5f;
@@ -244,7 +255,9 @@ CGFloat RadiansToDegrees(CGFloat radians)
                                                               relativeDuration:0.5
                                                                     animations:
                                        ^{
-//                                           destinationBottomView.frame = CGRectMake(0, h, w, h);
+                                           CGFloat angle = DegreesToRadians(-90);
+                                           destinationBottomView.layer.transform = [self makeRotationAndPerspectiveTransform:angle];
+                                           
                                            destinationBottomShadow.frame = destinationBottomView.frame;
                                            destinationBottomShadow.alpha = minShadow;
                                            sourceUpperShadow.alpha = maxShadow;
