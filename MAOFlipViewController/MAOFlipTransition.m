@@ -6,9 +6,21 @@
 //  Copyright (c) 2014年 Mao Nishi. All rights reserved.
 //
 
+const CGFloat perspectiveDepth = (1.0f / -500.0f);
+
 #import "MAOFlipTransition.h"
 
 @implementation MAOFlipTransition
+
+CGFloat DegreesToRadians(CGFloat degrees)
+{
+    return degrees * M_PI / 180;
+}
+
+CGFloat RadiansToDegrees(CGFloat radians)
+{
+    return radians * 180 / M_PI;
+}
 
 - (NSTimeInterval)transitionDuration:(id <UIViewControllerContextTransitioning>)transitionContext
 {
@@ -88,8 +100,8 @@
         //Pushの動作。上にめくる
         
         //高さ0にしておく
-        [destinationUpperView setFrame:CGRectMake(0, destinationUpperView.frame.size.height,
-                                                  destinationUpperView.frame.size.width, 0)];
+//        [destinationUpperView setFrame:CGRectMake(0, destinationUpperView.frame.size.height,
+//                                                  destinationUpperView.frame.size.width, 0)];
         
         //遷移先のビューをスナップショットの下に挿入
         [containerView insertSubview:destinationVC.view belowSubview:sourceUpperView];
@@ -106,10 +118,23 @@
         destinationUpperShadow.alpha = minShadow;
         destinationBottomShadow.alpha = maxShadow;
         
-        [containerView insertSubview:sourceUpperShadow aboveSubview:sourceUpperView];
-        [containerView insertSubview:sourceBottomShadow aboveSubview:sourceBottomView];
-        [containerView insertSubview:destinationUpperShadow aboveSubview:destinationUpperView];
-        [containerView insertSubview:destinationBottomShadow belowSubview:sourceBottomView];
+//        [containerView insertSubview:sourceUpperShadow aboveSubview:sourceUpperView];
+//        [containerView insertSubview:sourceBottomShadow aboveSubview:sourceBottomView];
+//        [containerView insertSubview:destinationUpperShadow aboveSubview:destinationUpperView];
+//        [containerView insertSubview:destinationBottomShadow belowSubview:sourceBottomView];
+        
+        // Perspective
+        CATransform3D perspectiveTransform = CATransform3DIdentity;
+        perspectiveTransform.m34 = perspectiveDepth;
+        sourceBottomView.layer.transform = perspectiveTransform;
+
+        
+        sourceBottomView.layer.anchorPoint = CGPointMake(0.5, 0.0);
+        destinationUpperView.layer.anchorPoint = sourceBottomView.layer.anchorPoint;
+        sourceBottomView.frame = CGRectMake(0, sourceUpperView.frame.size.height,
+                                            sourceBottomView.frame.size.width,
+                                            sourceBottomView.frame.size.height);
+        destinationUpperView.frame = sourceBottomView.frame;
         
         //切れ目がないアニメーション
         [UIView animateKeyframesWithDuration:[self transitionDuration:transitionContext]
@@ -122,7 +147,10 @@
                                                               relativeDuration:0.5
                                                                     animations:
                                        ^{
-                                           sourceBottomView.frame = CGRectMake(0, sourceBottomView.frame.origin.y, w, 0);
+                                           CGFloat angle = DegreesToRadians(179);
+                                           sourceBottomView.layer.transform = CATransform3DMakeRotation(angle, 1, 0, 0);
+                                           destinationUpperView.layer.transform = CATransform3DMakeRotation(-angle, 1, 0, 0);
+                                           
                                            sourceBottomShadow.frame = sourceBottomView.frame;
                                            sourceBottomShadow.alpha = maxShadow * 0.5;
                                            destinationUpperShadow.alpha = maxShadow * 0.5;
@@ -134,7 +162,7 @@
                                                               relativeDuration:0.5
                                                                     animations:
                                        ^{
-                                           destinationUpperView.frame = CGRectMake(0, 0, w, h);
+                                           //destinationUpperView.frame = CGRectMake(0, 0, w, h);
                                            destinationUpperShadow.frame = destinationUpperView.frame;
                                            destinationUpperShadow.alpha = minShadow;
                                            sourceUpperShadow.alpha = maxShadow;
@@ -178,15 +206,16 @@
         destinationUpperShadow.alpha = maxShadow;
         destinationBottomShadow.alpha = minShadow;
         
-        [containerView insertSubview:sourceUpperShadow aboveSubview:sourceUpperView];
-        [containerView insertSubview:sourceBottomShadow aboveSubview:sourceBottomView];
-        [containerView insertSubview:destinationUpperShadow belowSubview:sourceUpperView];
-        [containerView insertSubview:destinationBottomShadow aboveSubview:destinationBottomView];
+//        [containerView insertSubview:sourceUpperShadow aboveSubview:sourceUpperView];
+//        [containerView insertSubview:sourceBottomShadow aboveSubview:sourceBottomView];
+//        [containerView insertSubview:destinationUpperShadow belowSubview:sourceUpperView];
+//        [containerView insertSubview:destinationBottomShadow aboveSubview:destinationBottomView];
 
         // Perspective
         CATransform3D rotationAndPerspectiveTransform = CATransform3DIdentity;
-        rotationAndPerspectiveTransform.m34 = 1.0 / -500;
+        rotationAndPerspectiveTransform.m34 = perspectiveDepth;
         sourceUpperView.layer.transform = rotationAndPerspectiveTransform;
+        //sourceUpperView.layer.doubleSided = NO;
         
         sourceUpperView.layer.anchorPoint = CGPointMake(0.5, 1.0);
         sourceUpperView.frame = CGRectMake(0, 0, sourceUpperView.frame.size.width, sourceUpperView.frame.size.height);
@@ -201,8 +230,9 @@
                                                               relativeDuration:0.5
                                                                     animations:
                                        ^{
-                                           sourceUpperView.layer.transform = CATransform3DMakeRotation(M_PI, 1, 0, 0);
-//                                           sourceUpperView.frame = CGRectMake(0, h, w, 0);
+                                           CGFloat angle = DegreesToRadians(-179);
+                                           sourceUpperView.layer.transform = CATransform3DMakeRotation(angle, 1, 0, 0);
+
                                            sourceUpperShadow.frame = sourceUpperView.frame;
                                            sourceUpperShadow.alpha = maxShadow * 0.5f;
                                            destinationBottomShadow.alpha = maxShadow * 0.5f;
